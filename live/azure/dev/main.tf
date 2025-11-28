@@ -7,4 +7,14 @@ terraform {
   required_version = ">= 1.5.0"
 }
 
+// Simple dev resource group so Azure deployment actually creates something.
+resource "azurerm_resource_group" "dev" {
+  name     = "rg-infra-${var.environment}"
+  location = var.location
+
+  tags = {
+    env     = var.environment
+    project = "infra-project"
+  }
+}
 

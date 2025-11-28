@@ -4,8 +4,8 @@
 
 terraform {
   backend "azurerm" {
-    resource_group_name  = "rg-terraform-backend-dev" // TODO
-    storage_account_name = "tfstatebackenddev"        // TODO
+    resource_group_name  = "rg-terraform-backend-dev"
+    storage_account_name = "tfstatebkdev7faa6"
     container_name       = "tfstate"
     key                  = "infra-project/dev/terraform.tfstate"
   }
