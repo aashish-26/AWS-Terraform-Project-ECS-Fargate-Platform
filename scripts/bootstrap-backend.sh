@@ -11,7 +11,7 @@
 #   errors or create duplicate resources.
 #
 # Usage (example):
-#   ./scripts/bootstrap-backend.sh --env dev --region us-east-1 --account-id 123456789012
+#   ./scripts/bootstrap-backend.sh --env dev --region ap-south-1 --account-id 471112729537
 #
 # IAM / principal requirements:
 # - The principal running this script must have permissions to:
@@ -135,11 +135,18 @@ set -e
 
 if [[ ${BUCKET_EXISTS_EXIT} -ne 0 ]]; then
   echo "[bootstrap-backend] Creating S3 bucket ${STATE_BUCKET_NAME}"
-  aws s3api create-bucket \
-    --profile "${AWS_CLI_PROFILE}" \
-    --bucket "${STATE_BUCKET_NAME}" \
-    --region "${REGION}" \
-    --create-bucket-configuration LocationConstraint="${REGION}"
+  if [[ "${REGION}" == "us-east-1" ]]; then
+    # In us-east-1, the LocationConstraint parameter must be omitted.
+    aws s3api create-bucket \
+      --profile "${AWS_CLI_PROFILE}" \
+      --bucket "${STATE_BUCKET_NAME}"
+  else
+    aws s3api create-bucket \
+      --profile "${AWS_CLI_PROFILE}" \
+      --bucket "${STATE_BUCKET_NAME}" \
+      --region "${REGION}" \
+      --create-bucket-configuration LocationConstraint="${REGION}"
+  fi
 else
   echo "[bootstrap-backend] Reusing existing S3 bucket ${STATE_BUCKET_NAME}"
 fi

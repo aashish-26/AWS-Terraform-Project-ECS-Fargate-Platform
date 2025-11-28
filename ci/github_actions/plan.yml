@@ -91,7 +91,7 @@ jobs:
         # Reason: Generate a plan file that can be inspected and applied later.
         run: |
           terraform -chdir=${{ env.TF_WORKING_DIR }} plan -out=plan.tfplan
-          terraform -chdir=${{ env.TF_WORKING_DIR }} show -json plan.tfplan > plan.json
+          terraform -chdir=${{ env.TF_WORKING_DIR }} show -json plan.tfplan > ${{ env.TF_WORKING_DIR }}/plan.json
 
       - name: Run Conftest (policy-as-code)
         # Reason: Enforce custom security policies (no public S3, no IAM wildcards, etc.).

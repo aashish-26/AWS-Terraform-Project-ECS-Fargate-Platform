@@ -13,7 +13,7 @@
         ],
         "view": "timeSeries",
         "stacked": false,
-        "region": "us-east-1",
+        "region": "ap-south-1",
         "stat": "Sum",
         "period": 60
       }
@@ -31,7 +31,7 @@
         ],
         "view": "timeSeries",
         "stacked": false,
-        "region": "us-east-1",
+        "region": "ap-south-1",
         "stat": "p95",
         "period": 60
       }
@@ -49,7 +49,7 @@
         ],
         "view": "timeSeries",
         "stacked": false,
-        "region": "us-east-1",
+        "region": "ap-south-1",
         "stat": "Average",
         "period": 60
       }
@@ -67,7 +67,7 @@
         ],
         "view": "timeSeries",
         "stacked": false,
-        "region": "us-east-1",
+        "region": "ap-south-1",
         "stat": "Average",
         "period": 60
       }

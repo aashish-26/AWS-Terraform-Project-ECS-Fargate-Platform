@@ -1,0 +1,17 @@
+# Force LF for all shell scripts
+*.sh text eol=lf
+
+# Force LF for Terraform
+*.tf text eol=lf
+*.tfvars text eol=lf
+
+# Force LF for YAML (GitHub Actions, CloudInit, Kubernetes)
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Force LF for templates
+*.tpl text eol=lf
+*.json text eol=lf
+
+# Ignore Windows CRLF normalization
+* text=auto eol=lf

@@ -17,7 +17,7 @@ variable "environment" {
 variable "region" {
   description = "AWS region where dev resources will be created."
   type        = string
-  default     = "us-east-1"
+  default     = "ap-south-1"
 }
 
 variable "account_id" {

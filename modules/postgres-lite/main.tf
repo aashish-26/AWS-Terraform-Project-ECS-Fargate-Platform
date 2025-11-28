@@ -62,9 +62,11 @@ resource "aws_security_group" "postgres" {
 }
 
 // Random password for the database user. This avoids hard-coding secrets in code.
+// Note: special characters are disabled to keep SQL string interpolation simple
+// in the demo user-data script and avoid quoting/escaping issues.
 resource "random_password" "db" {
   length  = 16
-  special = true
+  special = false
 }
 
 // EBS volume that will hold the Postgres data directory.
