@@ -1,0 +1,55 @@
+name: Terraform Azure Dev
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  terraform-azure-dev:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: live/azure/dev
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      # Basic checks that don't require Azure credentials
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive ../../..
+
+      - name: Terraform init (no backend, for validation only)
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      # Example of how you could run a plan using Azure credentials.
+      # To enable this:
+      #  1) Create a service principal:
+      #       az ad sp create-for-rbac --name "tf-sp-dev" --role Contributor \
+      #         --scopes /subscriptions/7faa6275-6840-45f2-bba2-d69d1ce640dc
+      #  2) Add the output values as GitHub Actions secrets:
+      #       AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID
+      #  3) Uncomment the step below.
+      #
+      # - name: Terraform plan (with Azure backend)
+      #   env:
+      #     ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      #     ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      #     ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+      #     ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      #   run: |
+      #     terraform init
+      #     terraform plan -var-file=dev.tfvars
+
+
