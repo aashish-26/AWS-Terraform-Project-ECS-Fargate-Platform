@@ -5,7 +5,7 @@ Provision a production-aligned infrastructure stack using Terraform, now **Azure
 The project demonstrates multi-cloud patterns: remote state, CI/CD, least-privilege access, security guardrails, and observability.
 
 ### High-level Scope
-- **Azure (primary)**: App Service–based web app stack, remote state in Azure Storage, GitHub Actions plan/apply workflows.
+- **Azure (primary)**: Container-based web app stack on Azure App Service (Linux) pulling images from Azure Container Registry, with remote Terraform state in Azure Storage and GitHub Actions for plan/apply and image build.
 - **AWS (reference)**: Full ECS Fargate platform with VPC, ALB, ECR, EC2 Postgres, CloudWatch monitoring, and S3/DynamoDB backend.
 
 ---
@@ -13,13 +13,15 @@ The project demonstrates multi-cloud patterns: remote state, CI/CD, least-privil
 ### Azure Architecture Overview (current primary)
 - Resource group per environment (for example, `rg-infra-project-dev`).
 - App Service Plan (`azurerm_service_plan`) for Linux workloads.
-- Linux Web App (`azurerm_linux_web_app`) running a Node 18 LTS app.
+- Linux Web App (`azurerm_linux_web_app`) running a **container image** from Azure Container Registry.
+- Azure Container Registry (`azurerm_container_registry`) created and managed via Terraform in `live/azure/dev`.
 - Remote Terraform state stored in Azure Storage (`backend "azurerm"` in `live/azure/dev/backend.tf`).
 - GitHub Actions workflows:
   - `Terraform Plan (azure dev)` – PR-based plan, linting, security, and policy-as-code.
   - `Terraform Apply (azure dev)` – manual, protected apply from a reviewed plan file.
+  - `Azure Image Build and Push (dev)` – builds the Docker image from this repo, scans it with Trivy, generates an SBOM, and pushes to Azure Container Registry.
 
-> Note: Additional Azure components (Container Registry, Key Vault, Azure Database for PostgreSQL, Azure Monitor) can be layered in using the same patterns as the AWS stack and are the natural next iteration.
+> Note: Additional Azure components (Key Vault, Azure Database for PostgreSQL, Azure Monitor / Application Insights) are documented as the next iteration and can be layered in using the same patterns.
 
 ### AWS Architecture Overview (reference implementation)
 - VPC (public subnets for demo)
