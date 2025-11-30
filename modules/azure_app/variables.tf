@@ -18,8 +18,14 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "app_service_sku" {
-  description = "SKU tier/size for the App Service plan (e.g., F1, B1)."
+variable "app_service_sku_tier" {
+  description = "App Service plan tier (e.g., Free, Basic, Standard, PremiumV2)."
+  type        = string
+  default     = "Free"
+}
+
+variable "app_service_sku_size" {
+  description = "App Service plan size (e.g., F1, B1, S1)."
   type        = string
   default     = "F1"
 }

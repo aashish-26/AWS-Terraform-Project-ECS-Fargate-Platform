@@ -16,8 +16,8 @@ resource "azurerm_app_service_plan" "this" {
   resource_group_name = azurerm_resource_group.this.name
 
   sku {
-    tier = var.app_service_sku
-    size = var.app_service_sku
+    tier = var.app_service_sku_tier
+    size = var.app_service_sku_size
   }
 
   tags = {

@@ -84,7 +84,7 @@ jobs:
         run: conftest test ${{ env.TF_WORKING_DIR }}/plan.json -p modules/security/policies/conftest
 
       - name: Save human-readable plan
-        run: terraform -chdir=${{ env.TF_WORKING_DIR }} show -no-color plan.tfplan > plan.txt
+        run: terraform -chdir=${{ env.TF_WORKING_DIR }} show -no-color plan.tfplan > ${{ env.TF_WORKING_DIR }}/plan.txt
 
       - name: Upload plan artifacts
         uses: actions/upload-artifact@v4
