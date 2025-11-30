@@ -32,7 +32,8 @@ resource "azurerm_linux_web_app" "this" {
 
   site_config {
     application_stack {
-      node_version = "18-lts"
+      docker_image_name   = var.container_image
+      docker_registry_url = var.container_registry_url
     }
   }
 

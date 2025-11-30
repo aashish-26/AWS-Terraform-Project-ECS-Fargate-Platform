@@ -30,4 +30,16 @@ variable "app_service_sku_name" {
   default     = "F1"
 }
 
+variable "container_image" {
+  description = "Full container image name to run (for example, nginx:latest or myregistry.azurecr.io/app:tag)."
+  type        = string
+  default     = "nginx:latest"
+}
+
+variable "container_registry_url" {
+  description = "Docker registry URL (for example, https://index.docker.io or https://myregistry.azurecr.io)."
+  type        = string
+  default     = "https://index.docker.io"
+}
+
 

@@ -5,18 +5,31 @@
 - No PII/PCI unless extended. Treat DB credentials and secrets as confidential.
 
 ## Secrets Management
+**AWS (reference)**
 - All secrets stored in AWS Secrets Manager.
 - Encryption enforced using KMS CMK: alias/service-key-<env>.
 - No plaintext secrets in Terraform code or tfvars.
 - ECS tasks retrieve secrets using task execution role with GetSecretValue only.
 
+**Azure (primary) – target model**
+- Secrets stored in Azure Key Vault (connection strings, API keys, DB credentials).
+- Encryption-at-rest via Microsoft-managed or customer-managed keys.
+- Web App accesses secrets via system-assigned managed identity and Key Vault access policies / RBAC.
+
 ## Encryption Standards
+**AWS**
 - S3 state bucket: SSE-KMS (CMK alias/terraform-state-key-<env>).
 - DynamoDB table: server-side encryption enabled.
 - EBS volume for Postgres EC2 instance encrypted with KMS.
 - TLS termination at ALB when HTTPS is configured (optional).
 
-## IAM Model (Least Privilege)
+**Azure**
+- Terraform state: encrypted at rest in Azure Storage.
+- App Service files: encrypted at rest with platform-managed keys.
+- (Planned) Azure Database for PostgreSQL: storage encryption and TLS enforced for client connections.
+
+## Identity / Access Model (Least Privilege)
+**AWS**
 | Principal | Purpose | Allowed Actions | Resource Scope |
 |----------|----------|----------------|----------------|
 | Deploy Role | Terraform apply from CI | CRUD on project resources, tag-restricted | Only resources tagged project=<project>, env=<env> |
@@ -25,11 +38,22 @@
 | Developer ReadOnly Role | Inspect infra | Describe*/List* only | Entire account |
 | Admin Role | Rare operations, break-glass | Full action set | Restricted to two MFA-enforced principals |
 
+**Azure (conceptual equivalent)**
+- GitHub OIDC → Azure AD service principal with rights only to the target RG and backend RG.
+- Web App system-assigned managed identity used to read secrets from Key Vault and talk to PaaS services.
+- Role assignments scoped to resource groups, not subscription-wide, wherever possible.
+
 ## Network Controls
+**AWS**
 - ALB public. ECS tasks allowed inbound only from ALB target group.
 - Postgres EC2 allows inbound only from ECS task ENIs on port 5432.
 - No `0.0.0.0/0` inbound to DB or ECS tasks.
 - S3 public access block enforced.
+
+**Azure (current + planned)**
+- Web App is internet-facing but can be fronted by Application Gateway or Front Door in future iterations.
+- (Planned) Azure Database for PostgreSQL reachable only from app subnet / outbound IPs.
+- Storage account for state configured without public anonymous access.
 
 ## Policy-as-Code Requirements
 Reject merges if any rule fails:
@@ -38,18 +62,26 @@ Reject merges if any rule fails:
 - Any S3 bucket without SSE-KMS.
 - Any resource missing mandatory tags: project, env, owner.
 
+> The same policies can be extended to Azure by evaluating the Terraform plan JSON with Conftest (for example: no public storage accounts, mandatory tags, restricted firewall rules).
+
 ## Logging and Audit
+**AWS**
 - CloudTrail enabled and storing API logs.
 - CloudWatch Logs receive app logs, container logs, and DB logs.
 - IAM changes tracked through CloudTrail and IAM Access Analyzer.
 
+**Azure**
+- Activity Logs capture control-plane operations.
+- App Service logs and metrics available in Azure Monitor (and can be wired to Log Analytics workspaces).
+- (Planned) Application Insights for request-level traces and distributed tracing.
+
 ## Access Control
-- MFA required for human principals.
-- CI uses OIDC or specific IAM role with limited session duration.
-- Session Manager used for EC2 access; SSH disabled for demo.
+- MFA required for human principals (AWS IAM / Azure AD).
+- CI uses OIDC or specific IAM/service principal with limited session duration.
+- Session-based or bastion access for servers; no long-lived SSH keys for demo.
 
 ## Rotation and Key Management
-- CMK rotation: annual.
-- DB password rotation: Secrets Manager manual rotation allowed.
+- CMK rotation: annual (AWS KMS or Azure Key Vault keys).
+- DB password rotation: Secrets Manager / Key Vault rotation allowed.
 - IAM access keys prohibited except break-glass accounts.
 

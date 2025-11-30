@@ -1,15 +1,27 @@
-## AWS Terraform Infrastructure – ECS Fargate Platform
+## Azure-first Terraform Infrastructure – App Platform (with AWS reference stack)
 
 ### Purpose
-Provision a production-aligned infrastructure stack using Terraform.  
-Stack includes: VPC, ALB, ECS Fargate service, Postgres (EC2-hosted), ECR, Secrets Manager, CloudWatch metrics/logs/alarms, S3 remote state, DynamoDB locking, KMS encryption, IAM least-privilege, and CI/CD integration.
+Provision a production-aligned infrastructure stack using Terraform, now **Azure-first** with an **AWS ECS Fargate reference implementation**.  
+The project demonstrates multi-cloud patterns: remote state, CI/CD, least-privilege access, security guardrails, and observability.
 
-### Scope
-Infrastructure only. Application images are provided via ECR.  
-Terraform state stored remotely. CI applies infra using a restricted assume-role.  
-Runtime stack is minimal but maintains real production patterns.
+### High-level Scope
+- **Azure (primary)**: App Service–based web app stack, remote state in Azure Storage, GitHub Actions plan/apply workflows.
+- **AWS (reference)**: Full ECS Fargate platform with VPC, ALB, ECR, EC2 Postgres, CloudWatch monitoring, and S3/DynamoDB backend.
 
-### Architecture Components
+---
+
+### Azure Architecture Overview (current primary)
+- Resource group per environment (for example, `rg-infra-project-dev`).
+- App Service Plan (`azurerm_service_plan`) for Linux workloads.
+- Linux Web App (`azurerm_linux_web_app`) running a Node 18 LTS app.
+- Remote Terraform state stored in Azure Storage (`backend "azurerm"` in `live/azure/dev/backend.tf`).
+- GitHub Actions workflows:
+  - `Terraform Plan (azure dev)` – PR-based plan, linting, security, and policy-as-code.
+  - `Terraform Apply (azure dev)` – manual, protected apply from a reviewed plan file.
+
+> Note: Additional Azure components (Container Registry, Key Vault, Azure Database for PostgreSQL, Azure Monitor) can be layered in using the same patterns as the AWS stack and are the natural next iteration.
+
+### AWS Architecture Overview (reference implementation)
 - VPC (public subnets for demo)
 - ALB + target group
 - ECS Cluster + Fargate Service + Task Definition
@@ -21,25 +33,49 @@ Runtime stack is minimal but maintains real production patterns.
 - CloudWatch logs, metrics, dashboards, alarms
 - IAM roles: deploy role, exec role, developer read-only role, admin
 
-### Repo Structure (planned)
+---
+
+### Migration Story: from AWS ECS Fargate to Azure App Service
+- **Containers / compute**: ECS Fargate → Azure App Service (Linux) for a simpler, PaaS-style runtime in this repo.  
+  The same patterns (immutable image, health checks, rolling deploys) can be carried over to Azure Container Apps or AKS.
+- **Registry**: ECR → Azure Container Registry (planned extension; current app uses built-in runtime).
+- **Database**: EC2-hosted Postgres → Azure Database for PostgreSQL Flexible Server (planned extension).
+- **Secrets**: AWS Secrets Manager → Azure Key Vault (planned extension).
+- **State backend**: S3 + DynamoDB → Azure Storage account container (`backend "azurerm"`).
+- **Monitoring**: CloudWatch + SNS → Azure Monitor + Log Analytics + action groups (planned extension).
+
+This repo intentionally keeps the original AWS implementation as a **reference** while showing how to stand up and run an equivalent app stack on Azure using Terraform and GitHub Actions.
+
+---
+
+### Repo Structure
 - `docs/`
 - `modules/`
-- `live/aws/dev`
-- `live/aws/prod`
-- `ci/github_actions/`
+- `live/aws/dev`, `live/aws/prod` (reference AWS ECS stack)
+- `live/azure/dev`, `live/azure/prod` (Azure App Service stack)
+- `ci/github_actions/` (AWS CI pipelines)
+- `.github/workflows/` (Azure CI pipelines)
 - `scripts/`
 
-> Note: Some directories are placeholders during the documentation phase and will be filled in as code is added.
+> Some directories began as placeholders and were filled in as the AWS and Azure implementations were added.
 
-### Pre-Deployment Requirements
-- AWS account with administrative bootstrap access
-- Terraform >= 1.5 (see `.terraform-version`)
-- AWS CLI configured with MFA
-- GitHub Actions OIDC or IAM user/role for CI
-- Domain + Route53 hosted zone (optional)
-- Bash shell (macOS/Linux/WSL) for running helper scripts
+### Pre-Deployment Requirements (Azure)
+- Azure subscription with permissions to create RG, App Service Plan, and Web App.
+- Service principal credentials stored as `AZURE_CREDENTIALS` GitHub secret (used by Azure login action).
+- Terraform >= 1.5 (see `.terraform-version`).
+- GitHub Actions enabled for the repository.
 
-### How to Deploy (dev)
+### How to Deploy Azure (dev) via GitHub Actions
+1. Push a feature branch and open a PR into `dev` or `main`.
+2. GitHub runs **Terraform Plan (azure dev)**:
+   - Executes fmt/validate/tflint/tfsec/conftest.
+   - Generates a plan and comments it on the PR.
+3. After review, merge the PR.
+4. Go to **Actions → Terraform Apply (azure dev)**:
+   - Click **Run workflow**, choose the branch (for example, `dev`), and keep `apply_environment = azure-dev`.
+   - The workflow logs show `terraform init` + `terraform apply` running against `live/azure/dev`.
+
+### How to Deploy AWS (dev) – Reference Flow
 ```bash
 ./scripts/bootstrap-backend.sh --env dev --region us-east-1 --account-id <id>
 
@@ -52,18 +88,16 @@ ALB_DNS=$(terraform output -raw alb_dns)
 curl -fsS "http://${ALB_DNS}/health"
 ```
 
-### How to Destroy (dev)
+### How to Destroy AWS (dev) – Reference Flow
 ```bash
 cd live/aws/dev
 terraform destroy -var-file=dev.tfvars -auto-approve
 ./scripts/cleanup.sh --env dev
 ```
 
-### Observability
-- Application logs → CloudWatch Logs  
-- ECS + ALB metrics → CloudWatch Metrics  
-- Dashboards defined in monitoring module  
-- Alarms routed to SNS
+### Observability (current state)
+- **AWS stack**: CloudWatch Logs + CloudWatch Metrics, dashboards and alarms via `modules/monitoring`, alerting via SNS.
+- **Azure stack**: Web App metrics and logs available in Azure Portal, and can be extended with Log Analytics workspaces, Application Insights, and alert rules using the same Terraform patterns.
 
 ### Owners
 - **Infra Owner:** Aashish  

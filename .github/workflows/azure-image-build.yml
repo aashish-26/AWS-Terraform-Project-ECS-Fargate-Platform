@@ -1,0 +1,75 @@
+name: Azure Image Build and Push (dev)
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+env:
+  # Must match the ACR name defined in live/azure/dev/main.tf
+  AZURE_CONTAINER_REGISTRY_NAME: infraacrdev
+  # Image name part after the registry (also used in Terraform)
+  IMAGE_REPOSITORY: infra-project-dev-app
+  IMAGE_TAG: latest
+
+jobs:
+  build-and-push-azure:
+    name: Build, scan, and push image to Azure Container Registry
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write        # required for OIDC-based Azure login
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR login server
+        id: get-acr
+        run: |
+          LOGIN_SERVER=$(az acr show -n "$AZURE_CONTAINER_REGISTRY_NAME" --query loginServer -o tsv)
+          echo "LOGIN_SERVER=$LOGIN_SERVER"
+          echo "LOGIN_SERVER=$LOGIN_SERVER" >> $GITHUB_ENV
+
+      - name: Docker login to ACR
+        run: |
+          az acr login -n "$AZURE_CONTAINER_REGISTRY_NAME"
+
+      - name: Build Docker image
+        run: |
+          IMAGE_URI=${LOGIN_SERVER}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+          echo "Building image ${IMAGE_URI}"
+          docker build -t "${IMAGE_URI}" .
+          echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.18.0
+        with:
+          image-ref: ${{ env.IMAGE_URI }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+
+      - name: Generate SBOM with Trivy (CycloneDX)
+        run: |
+          trivy image --format cyclonedx --output sbom.cdx.json "${IMAGE_URI}"
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-azure-${{ github.sha }}
+          path: sbom.cdx.json
+
+      - name: Push image to ACR
+        run: |
+          docker push "${IMAGE_URI}"
+
+
