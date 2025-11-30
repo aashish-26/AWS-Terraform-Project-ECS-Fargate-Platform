@@ -3,17 +3,17 @@
 ## SLIs (Service Level Indicators)
 1. **Availability (HTTP success rate)**  
    - AWS: ALB `TargetResponseCode` counts.  
-   - Azure: App Service `Http2xx`, `Http5xx` metrics.  
+   - Azure: Container App HTTP request metrics (2xx/3xx vs 4xx/5xx) from Log Analytics or Azure Monitor.  
    - Measurement: % of HTTP 2xx/3xx responses for `/health` over 1-minute intervals.
 
 2. **Latency (p95)**  
    - AWS: ALB `TargetResponseTime` metric.  
-   - Azure: App Service `Latency` metric (or Application Insights request duration).  
+   - Azure: Container App request duration metrics (p95) from Log Analytics or Application Insights.  
    - Measurement: 95th percentile request latency over 5-minute intervals.
 
 3. **Error Rate**  
    - AWS: ALB 5xx count.  
-   - Azure: App Service `Http5xx` count or Application Insights failed requests.  
+   - Azure: Container App 5xx response count from Log Analytics or Azure Monitor.  
    - Measurement: 5xx responses as a percentage of all responses over 5-minute intervals.
 
 ## SLOs (Service Level Objectives)
@@ -40,7 +40,7 @@
 
 ## Monitoring Sources
 - **AWS:** CloudWatch Metrics (ALB, ECS service CPU/memory, EC2 metrics), CloudWatch Logs, dashboards defined in `modules/monitoring`.  
-- **Azure:** App Service metrics, (planned) Azure Monitor dashboards and Application Insights.  
+- **Azure:** Container App metrics (CPU, memory, replica count, request count, latency) via Azure Monitor, Log Analytics workspace (integrated with Container App Environment), (planned) Azure Monitor dashboards and Application Insights.  
 
 ## Ownership & Escalation
 - **SLO Owner:** SRE Owner - Aashish  

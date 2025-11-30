@@ -41,5 +41,26 @@ terraform apply dev.tfplan
 ```
 
 ### Smoke test (Azure)
-- From the Terraform outputs or Azure Portal, grab the Web App default hostname.  
-- Open it in a browser or curl the `/` or `/health` endpoint once your app is deployed.
+- From the Terraform outputs or Azure Portal, grab the Container App FQDN (fully qualified domain name).
+- Open it in a browser or curl the `/` or `/health` endpoint once your app is deployed:
+  ```bash
+  CONTAINER_APP_FQDN=$(terraform output -raw container_app_fqdn)
+  curl -fsS "http://${CONTAINER_APP_FQDN}/health" || (echo "health check failed" && exit 1)
+  ```
+
+### Troubleshooting common issues
+
+**Issue: "MissingSubscriptionRegistration: The subscription is not registered to use namespace 'Microsoft.App'"**
+- Solution: Register the resource provider: `az provider register --namespace Microsoft.App`
+- Wait until status shows "Registered": `az provider show -n Microsoft.App --query "registrationState" -o tsv`
+
+**Issue: "Current Limit (Basic VMs): 0" or "Current Limit (Free VMs): 0"**
+- This error occurs if you try to use App Service Plan instead of Container Apps.
+- Container Apps doesn't require VM quotas (it's serverless).
+- If you see this, ensure you're using the Container Apps module, not App Service Plan.
+
+**Issue: Container App fails to pull image with authentication errors**
+- Verify the managed identity has AcrPull role: `az role assignment list --scope <acr-id> --assignee <identity-id>`
+- Ensure `depends_on` is set correctly in the Terraform configuration (role assignment must complete before app creation).
+
+See `docs/TROUBLESHOOTING.md` for more detailed troubleshooting steps.

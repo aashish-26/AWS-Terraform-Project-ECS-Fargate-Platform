@@ -14,7 +14,8 @@
 **Azure (primary) – target model**
 - Secrets stored in Azure Key Vault (connection strings, API keys, DB credentials).
 - Encryption-at-rest via Microsoft-managed or customer-managed keys.
-- Web App accesses secrets via system-assigned managed identity and Key Vault access policies / RBAC.
+- Container App accesses secrets via user-assigned managed identity and Key Vault access policies / RBAC.
+- ACR authentication uses managed identity (AcrPull role) - no passwords or admin keys.
 
 ## Encryption Standards
 **AWS**
@@ -25,7 +26,8 @@
 
 **Azure**
 - Terraform state: encrypted at rest in Azure Storage.
-- App Service files: encrypted at rest with platform-managed keys.
+- Container App images: stored in ACR with encryption at rest (platform-managed keys).
+- Container App environment: Log Analytics workspace data encrypted at rest.
 - (Planned) Azure Database for PostgreSQL: storage encryption and TLS enforced for client connections.
 
 ## Identity / Access Model (Least Privilege)
@@ -40,7 +42,10 @@
 
 **Azure (conceptual equivalent)**
 - GitHub OIDC → Azure AD service principal with rights only to the target RG and backend RG.
-- Web App system-assigned managed identity used to read secrets from Key Vault and talk to PaaS services.
+- Container App uses user-assigned managed identity for:
+  - ACR image pulls (AcrPull role on ACR)
+  - Key Vault secret access (planned, Get/List secrets permission)
+  - Other PaaS service authentication
 - Role assignments scoped to resource groups, not subscription-wide, wherever possible.
 
 ## Network Controls
@@ -51,9 +56,11 @@
 - S3 public access block enforced.
 
 **Azure (current + planned)**
-- Web App is internet-facing but can be fronted by Application Gateway or Front Door in future iterations.
-- (Planned) Azure Database for PostgreSQL reachable only from app subnet / outbound IPs.
+- Container App is internet-facing (external ingress enabled) but can be configured for internal-only access via Container App Environment settings.
+- Container App Environment can be configured with internal load balancer for private networking.
+- (Planned) Azure Database for PostgreSQL reachable only from Container App outbound IPs or VNet integration.
 - Storage account for state configured without public anonymous access.
+- ACR admin access disabled; all authentication via managed identity.
 
 ## Policy-as-Code Requirements
 Reject merges if any rule fails:
@@ -72,7 +79,8 @@ Reject merges if any rule fails:
 
 **Azure**
 - Activity Logs capture control-plane operations.
-- App Service logs and metrics available in Azure Monitor (and can be wired to Log Analytics workspaces).
+- Container App logs automatically sent to Log Analytics workspace (integrated with Container App Environment).
+- Container App metrics (CPU, memory, request count, latency) available in Azure Monitor.
 - (Planned) Application Insights for request-level traces and distributed tracing.
 
 ## Access Control

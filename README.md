@@ -40,16 +40,35 @@ The project demonstrates multi-cloud patterns: remote state, CI/CD, least-privil
 
 ---
 
-### Migration Story: from AWS ECS Fargate to Azure App Service
-- **Containers / compute**: ECS Fargate → Azure App Service (Linux) for a simpler, PaaS-style runtime in this repo.  
-  The same patterns (immutable image, health checks, rolling deploys) can be carried over to Azure Container Apps or AKS.
-- **Registry**: ECR → Azure Container Registry (planned extension; current app uses built-in runtime).
-- **Database**: EC2-hosted Postgres → Azure Database for PostgreSQL Flexible Server (planned extension).
-- **Secrets**: AWS Secrets Manager → Azure Key Vault (planned extension).
-- **State backend**: S3 + DynamoDB → Azure Storage account container (`backend "azurerm"`).
-- **Monitoring**: CloudWatch + SNS → Azure Monitor + Log Analytics + action groups (planned extension).
+### Migration Story: from AWS ECS Fargate to Azure Container Apps
 
-This repo intentionally keeps the original AWS implementation as a **reference** while showing how to stand up and run an equivalent app stack on Azure using Terraform and GitHub Actions.
+**Why the migration?**  
+This project started on AWS with an ECS Fargate design, but encountered **hard account-level restrictions** that blocked deployment:
+- ALB creation was disabled ("This account does not support creating load balancers")
+- vCPU quota was set to 1, blocking ECS Fargate and EC2 workloads
+- IAM OIDC trust policies were rejected for CI/CD roles
+- No path to request quota increases (not a full production account)
+
+These were **platform constraints, not design flaws**. To deliver a **fully functional, production-style project**, the decision was made to migrate to Azure.
+
+**Architecture migration:**
+- **Containers / compute**: ECS Fargate → **Azure Container Apps** (serverless, no VM quota required)
+  - Initially attempted App Service Plan, but hit quota limits (0 Free/Basic VMs)
+  - Switched to Container Apps for serverless operation without quota restrictions
+  - Same container patterns: immutable images, health checks, managed identity authentication
+- **Registry**: ECR → **Azure Container Registry (ACR)** with managed identity (AcrPull role)
+- **Database**: EC2-hosted Postgres → Azure Database for PostgreSQL Flexible Server (planned extension)
+- **Secrets**: AWS Secrets Manager → Azure Key Vault (planned extension)
+- **State backend**: S3 + DynamoDB → **Azure Storage** account container (`backend "azurerm"`)
+- **Monitoring**: CloudWatch + SNS → **Azure Monitor + Log Analytics** (Container Apps environment includes Log Analytics workspace)
+
+**Key challenges overcome:**
+1. **Quota limitations**: Switched from App Service Plan (requires VM quota) to Container Apps (serverless)
+2. **Resource provider registration**: Registered `Microsoft.App` namespace for Container Apps
+3. **Managed identity timing**: Added explicit `depends_on` to ensure AcrPull role assignment completes before image pulls
+4. **Registry URL format**: Handled protocol stripping for ACR server names
+
+This repo intentionally keeps the original AWS implementation as a **reference** while the working, demonstrable platform is **Azure-first with Container Apps**.
 
 ---
 
