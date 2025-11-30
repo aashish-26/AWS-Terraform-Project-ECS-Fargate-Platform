@@ -1,7 +1,6 @@
 // main.tf
-// Placeholder root configuration for Azure dev environment.
-// No resources are currently defined. This file exists to mirror the
-// live/aws/dev structure and can be filled in when Azure support is added.
+// Root Terraform configuration for Azure dev environment.
+// Creates Azure Container Registry and Container App infrastructure.
 
 terraform {
   required_version = ">= 1.5.0"

@@ -1,6 +1,6 @@
 // backend.tf
-// Placeholder backend configuration for Azure dev.
-// When you add Azure support, configure this to use Azure Storage or another backend.
+// Remote state backend configuration for Azure dev.
+// Stores Terraform state in Azure Storage with encryption at rest.
 
 terraform {
   backend "azurerm" {

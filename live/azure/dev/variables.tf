@@ -1,5 +1,5 @@
 // variables.tf
-// Placeholder variables for Azure dev environment.
+// Input variables for Azure dev environment.
 
 variable "project" {
   description = "Project name used for naming and tagging."

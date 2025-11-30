@@ -1,7 +1,6 @@
 // providers.tf
-// Skeleton Azure provider configuration for dev environment.
-// This is a placeholder to illustrate structure; actual Azure resources
-// are not defined yet in this project.
+// Azure provider configuration for dev environment.
+// Requires Terraform >= 1.5.0 and AzureRM provider >= 3.0.
 
 terraform {
   required_version = ">= 1.5.0"
