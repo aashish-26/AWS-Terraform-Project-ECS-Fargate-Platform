@@ -12,14 +12,17 @@ The project demonstrates multi-cloud patterns: remote state, CI/CD, least-privil
 
 ### Azure Architecture Overview (current primary)
 - Resource group per environment (for example, `rg-infra-project-dev`).
-- App Service Plan (`azurerm_service_plan`) for Linux workloads.
-- Linux Web App (`azurerm_linux_web_app`) running a **container image** from Azure Container Registry.
+- **Azure Container Apps** (`azurerm_container_app`) – serverless container platform (no VM quota required).
+- Container App Environment (`azurerm_container_app_environment`) with Log Analytics workspace for observability.
+- User-assigned managed identity for secure ACR authentication (AcrPull role).
 - Azure Container Registry (`azurerm_container_registry`) created and managed via Terraform in `live/azure/dev`.
 - Remote Terraform state stored in Azure Storage (`backend "azurerm"` in `live/azure/dev/backend.tf`).
 - GitHub Actions workflows:
   - `Terraform Plan (azure dev)` – PR-based plan, linting, security, and policy-as-code.
   - `Terraform Apply (azure dev)` – manual, protected apply from a reviewed plan file.
   - `Azure Image Build and Push (dev)` – builds the Docker image from this repo, scans it with Trivy, generates an SBOM, and pushes to Azure Container Registry.
+
+> **Why Container Apps?** Container Apps is serverless and doesn't require App Service Plan VM quotas, making it ideal for subscriptions with quota limitations. It's also a modern, production-ready alternative to App Service for containerized workloads.
 
 > Note: Additional Azure components (Key Vault, Azure Database for PostgreSQL, Azure Monitor / Application Insights) are documented as the next iteration and can be layered in using the same patterns.
 
@@ -62,10 +65,13 @@ This repo intentionally keeps the original AWS implementation as a **reference**
 > Some directories began as placeholders and were filled in as the AWS and Azure implementations were added.
 
 ### Pre-Deployment Requirements (Azure)
-- Azure subscription with permissions to create RG, App Service Plan, and Web App.
+- Azure subscription with permissions to create Resource Groups, Container Apps, Container App Environments, Log Analytics Workspaces, and Container Registries.
+- **No VM quota required**: Container Apps is serverless and doesn't require App Service Plan quotas, making it ideal for subscriptions with quota limitations.
 - Service principal credentials stored as `AZURE_CREDENTIALS` GitHub secret (used by Azure login action).
 - Terraform >= 1.5 (see `.terraform-version`).
 - GitHub Actions enabled for the repository.
+
+> **Note**: Container Apps uses a consumption-based pricing model with a generous free tier (180,000 vCPU seconds, 360,000 GiB seconds, and 2 million requests per month), making it cost-effective for development and small workloads.
 
 ### How to Deploy Azure (dev) via GitHub Actions
 1. Push a feature branch and open a PR into `dev` or `main`.

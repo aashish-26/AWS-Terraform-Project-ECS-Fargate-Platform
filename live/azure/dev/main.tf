@@ -29,6 +29,7 @@ module "app" {
   resource_group_name = "rg-${var.project}-${var.environment}"
 
   container_image        = "${azurerm_container_registry.this.login_server}/${var.project}-${var.environment}-app:latest"
-  container_registry_url = "https://${azurerm_container_registry.this.login_server}"
+  container_registry_url = azurerm_container_registry.this.login_server
+  acr_id                 = azurerm_container_registry.this.id
 }
 

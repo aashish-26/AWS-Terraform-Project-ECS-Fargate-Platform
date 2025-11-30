@@ -18,18 +18,6 @@ variable "resource_group_name" {
   type        = string
 }
 
-variable "app_service_os_type" {
-  description = "App Service plan OS type (Linux or Windows)."
-  type        = string
-  default     = "Linux"
-}
-
-variable "app_service_sku_name" {
-  description = "App Service plan SKU name (e.g., F1, B1, P1v2)."
-  type        = string
-  default     = "F1"
-}
-
 variable "container_image" {
   description = "Full container image name to run (for example, nginx:latest or myregistry.azurecr.io/app:tag)."
   type        = string
@@ -40,6 +28,12 @@ variable "container_registry_url" {
   description = "Docker registry URL (for example, https://index.docker.io or https://myregistry.azurecr.io)."
   type        = string
   default     = "https://index.docker.io"
+}
+
+variable "acr_id" {
+  description = "Azure Container Registry resource ID (for granting AcrPull role to the managed identity)."
+  type        = string
+  default     = null
 }
 
 

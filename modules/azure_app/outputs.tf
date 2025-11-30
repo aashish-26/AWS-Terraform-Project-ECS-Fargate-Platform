@@ -3,19 +3,24 @@ output "resource_group_name" {
   value       = azurerm_resource_group.this.name
 }
 
-output "app_service_plan_id" {
-  description = "ID of the App Service plan."
-  value       = azurerm_service_plan.this.id
+output "container_app_name" {
+  description = "Name of the Azure Container App."
+  value       = azurerm_container_app.this.name
 }
 
-output "web_app_name" {
-  description = "Name of the Azure Web App."
-  value       = azurerm_linux_web_app.this.name
+output "container_app_fqdn" {
+  description = "Fully qualified domain name (URL) of the Container App."
+  value       = azurerm_container_app.this.latest_revision_fqdn
 }
 
-output "web_app_default_hostname" {
-  description = "Default hostname (URL) of the Azure Web App."
-  value       = azurerm_linux_web_app.this.default_hostname
+output "container_app_environment_id" {
+  description = "ID of the Container App Environment."
+  value       = azurerm_container_app_environment.this.id
+}
+
+output "managed_identity_id" {
+  description = "ID of the user-assigned managed identity used by the Container App."
+  value       = azurerm_user_assigned_identity.container_app.id
 }
 
 
